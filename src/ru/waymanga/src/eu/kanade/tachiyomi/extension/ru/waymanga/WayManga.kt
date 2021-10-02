@@ -21,27 +21,8 @@ class WayManga : ParsedHttpSource() {
 
     override val lang = "ru"
 
-    private val cookiesHeader by lazy {
-        val cookies = mutableMapOf<String, String>()
-        cookies["ageRestrict"] = "17"
-        buildCookies(cookies)
-    }
-
-    private fun buildCookies(cookies: Map<String, String>) =
-        cookies.entries.joinToString(separator = "; ", postfix = ";") {
-            "${URLEncoder.encode(it.key, "UTF-8")}=${URLEncoder.encode(it.value, "UTF-8")}"
-        }
-
-    override val client = network.client.newBuilder()
-        .addNetworkInterceptor { chain ->
-            val newReq = chain
-                .request()
-                .newBuilder()
-                .addHeader("Cookie", cookiesHeader)
-                .build()
-
-            chain.proceed(newReq)
-        }.build()!!
+    override fun headersBuilder() =
+        super.headersBuilder().add("Cookie", "ageRestrict=17;")
 
     override val supportsLatest = true
 
