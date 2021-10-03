@@ -9,7 +9,6 @@ import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -21,28 +20,6 @@ class WayManga : ParsedHttpSource() {
 
     override val lang = "ru"
 
-    private val cookiesHeader by lazy {
-        val cookies = mutableMapOf<String, String>()
-        cookies["ageRestrict"] = "17"
-        buildCookies(cookies)
-    }
-
-    private fun buildCookies(cookies: Map<String, String>) =
-        cookies.entries.joinToString(separator = "; ", postfix = ";") {
-            "${URLEncoder.encode(it.key, "UTF-8")}=${URLEncoder.encode(it.value, "UTF-8")}"
-        }
-
-    override val client = network.client.newBuilder()
-        .addNetworkInterceptor { chain ->
-            val newReq = chain
-                .request()
-                .newBuilder()
-                .addHeader("Cookie", cookiesHeader)
-                .build()
-
-            chain.proceed(newReq)
-        }.build()!!
-
     override val supportsLatest = true
 
     override fun popularMangaRequest(page: Int): Request =
@@ -52,7 +29,7 @@ class WayManga : ParsedHttpSource() {
         GET(baseUrl, headers)
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        return GET("$baseUrl/search?query=$query&sort=rating_short&page=$page")
+        return GET("$baseUrl/search?query=$query")
     }
 
     override fun popularMangaSelector() = "div.p-2"
@@ -99,10 +76,10 @@ class WayManga : ParsedHttpSource() {
 
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
-    override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("title").text()
-        val manga = SManga.create()
-        return manga
+    override fun mangaDetailsParse(document: Document): SManga = SManga.create().apply {
+        setUrlWithoutDomain(document.location())
+        title = document.selectFirst("title").text()
+        thumbnail_url = document.selectFirst("img.object-0").attr("src")
     }
 
     override fun chapterListSelector() = "div.chapters-list > div"
