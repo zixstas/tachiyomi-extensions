@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.extension.all.komga.dto.PageWrapperDto
 import eu.kanade.tachiyomi.extension.all.komga.dto.ReadListDto
 import eu.kanade.tachiyomi.extension.all.komga.dto.SeriesDto
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -32,12 +33,13 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import rx.Observable
 import rx.Single
-import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -173,23 +175,40 @@ open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
     override fun searchMangaParse(response: Response): MangasPage =
         processSeriesPage(response)
 
-    override fun mangaDetailsRequest(manga: SManga): Request =
-        GET(manga.url, headers)
+    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
+        return client.newCall(GET(manga.url, headers))
+            .asObservableSuccess()
+            .map { response ->
+                mangaDetailsParse(response).apply { initialized = true }
+            }
+    }
 
-    override fun mangaDetailsParse(response: Response): SManga =
-        if (response.fromReadList()) {
-            val readList = json.decodeFromString<ReadListDto>(response.body?.string()!!)
-            readList.toSManga()
-        } else {
-            val series = json.decodeFromString<SeriesDto>(response.body?.string()!!)
-            series.toSManga()
+    override fun mangaDetailsRequest(manga: SManga): Request =
+        GET(manga.url.replaceFirst("api/v1/", "", ignoreCase = true), headers)
+
+    override fun mangaDetailsParse(response: Response): SManga {
+        val responseBody = response.body
+            ?: throw IllegalStateException("Response code ${response.code}")
+
+        return responseBody.use { body ->
+            if (response.fromReadList()) {
+                val readList = json.decodeFromString<ReadListDto>(body.string())
+                readList.toSManga()
+            } else {
+                val series = json.decodeFromString<SeriesDto>(body.string())
+                series.toSManga()
+            }
         }
+    }
 
     override fun chapterListRequest(manga: SManga): Request =
         GET("${manga.url}/books?unpaged=true&media_status=READY&deleted=false", headers)
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        val page = json.decodeFromString<PageWrapperDto<BookDto>>(response.body?.string()!!).content
+        val responseBody = response.body
+            ?: throw IllegalStateException("Response code ${response.code}")
+
+        val page = responseBody.use { json.decodeFromString<PageWrapperDto<BookDto>>(it.string()).content }
 
         val r = page.mapIndexed { index, book ->
             SChapter.create().apply {
@@ -207,7 +226,10 @@ open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
         GET("${chapter.url}/pages")
 
     override fun pageListParse(response: Response): List<Page> {
-        val pages = json.decodeFromString<List<PageDto>>(response.body?.string()!!)
+        val responseBody = response.body
+            ?: throw IllegalStateException("Response code ${response.code}")
+
+        val pages = responseBody.use { json.decodeFromString<List<PageDto>>(it.string()) }
         return pages.map {
             val url = "${response.request.url}/${it.number}" +
                 if (!supportedImageTypes.contains(it.mediaType)) {
@@ -223,13 +245,18 @@ open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
     }
 
     private fun processSeriesPage(response: Response): MangasPage {
-        if (response.fromReadList()) {
-            with(json.decodeFromString<PageWrapperDto<ReadListDto>>(response.body?.string()!!)) {
-                return MangasPage(content.map { it.toSManga() }, !last)
-            }
-        } else {
-            with(json.decodeFromString<PageWrapperDto<SeriesDto>>(response.body?.string()!!)) {
-                return MangasPage(content.map { it.toSManga() }, !last)
+        val responseBody = response.body
+            ?: throw IllegalStateException("Response code ${response.code}")
+
+        return responseBody.use { body ->
+            if (response.fromReadList()) {
+                with(json.decodeFromString<PageWrapperDto<ReadListDto>>(body.string())) {
+                    MangasPage(content.map { it.toSManga() }, !last)
+                }
+            } else {
+                with(json.decodeFromString<PageWrapperDto<SeriesDto>>(body.string())) {
+                    MangasPage(content.map { it.toSManga() }, !last)
+                }
             }
         }
     }
@@ -350,9 +377,16 @@ open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
     private var authors = emptyMap<String, List<AuthorDto>>() // roles to list of authors
 
     override val name = "Komga${if (suffix.isNotBlank()) " ($suffix)" else ""}"
-    override val lang = "en"
+    override val lang = "all"
     override val supportsLatest = true
     private val LOG_TAG = "extension.all.komga${if (suffix.isNotBlank()) ".$suffix" else ""}"
+
+    // keep the previous ID when lang was "en", so that preferences and manga bindings are not lost
+    override val id by lazy {
+        val key = "${name.toLowerCase()}/en/$versionId"
+        val bytes = MessageDigest.getInstance("MD5").digest(key.toByteArray())
+        (0..7).map { bytes[it].toLong() and 0xff shl 8 * (7 - it) }.reduce(Long::or) and Long.MAX_VALUE
+    }
 
     override val baseUrl by lazy { getPrefBaseUrl() }
     private val username by lazy { getPrefUsername() }
@@ -421,111 +455,127 @@ open class Komga(suffix: String = "") : ConfigurableSource, HttpSource() {
     init {
         if (baseUrl.isNotBlank()) {
             Single.fromCallable {
-                client.newCall(GET("$baseUrl/api/v1/libraries", headers)).execute()
-            }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { response ->
+                try {
+                    client.newCall(GET("$baseUrl/api/v1/libraries", headers)).execute().use { response ->
                         libraries = try {
-                            json.decodeFromString(response.body?.string()!!)
+                            val responseBody = response.body
+                            if (responseBody != null) {
+                                responseBody.use { json.decodeFromString(it.string()) }
+                            } else {
+                                Log.e(LOG_TAG, "error while decoding JSON for libraries filter: response body is null. Response code: ${response.code}")
+                                emptyList()
+                            }
                         } catch (e: Exception) {
+                            Log.e(LOG_TAG, "error while decoding JSON for libraries filter", e)
                             emptyList()
                         }
-                    },
-                    { tr ->
-                        Log.e(LOG_TAG, "error while loading libraries for filters", tr)
                     }
-                )
+                } catch (e: Exception) {
+                    Log.e(LOG_TAG, "error while loading libraries for filters", e)
+                }
 
-            Single.fromCallable {
-                client.newCall(GET("$baseUrl/api/v1/collections?unpaged=true", headers)).execute()
-            }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { response ->
+                try {
+                    client.newCall(GET("$baseUrl/api/v1/collections?unpaged=true", headers)).execute().use { response ->
                         collections = try {
-                            json.decodeFromString<PageWrapperDto<CollectionDto>>(response.body?.string()!!).content
+                            val responseBody = response.body
+                            if (responseBody != null) {
+                                responseBody.use { json.decodeFromString<PageWrapperDto<CollectionDto>>(it.string()).content }
+                            } else {
+                                Log.e(LOG_TAG, "error while decoding JSON for collections filter: response body is null. Response code: ${response.code}")
+                                emptyList()
+                            }
                         } catch (e: Exception) {
+                            Log.e(LOG_TAG, "error while decoding JSON for collections filter", e)
                             emptyList()
                         }
-                    },
-                    { tr ->
-                        Log.e(LOG_TAG, "error while loading collections for filters", tr)
                     }
-                )
+                } catch (e: Exception) {
+                    Log.e(LOG_TAG, "error while loading collections for filters", e)
+                }
 
-            Single.fromCallable {
-                client.newCall(GET("$baseUrl/api/v1/genres", headers)).execute()
-            }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { response ->
+                try {
+                    client.newCall(GET("$baseUrl/api/v1/genres", headers)).execute().use { response ->
                         genres = try {
-                            json.decodeFromString(response.body?.string()!!)
+                            val responseBody = response.body
+                            if (responseBody != null) {
+                                responseBody.use { json.decodeFromString(it.string()) }
+                            } else {
+                                Log.e(LOG_TAG, "error while decoding JSON for genres filter: response body is null. Response code: ${response.code}")
+                                emptySet()
+                            }
                         } catch (e: Exception) {
+                            Log.e(LOG_TAG, "error while decoding JSON for genres filter", e)
                             emptySet()
                         }
-                    },
-                    { tr ->
-                        Log.e(LOG_TAG, "error while loading genres for filters", tr)
                     }
-                )
+                } catch (e: Exception) {
+                    Log.e(LOG_TAG, "error while loading genres for filters", e)
+                }
 
-            Single.fromCallable {
-                client.newCall(GET("$baseUrl/api/v1/tags", headers)).execute()
-            }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { response ->
+                try {
+                    client.newCall(GET("$baseUrl/api/v1/tags", headers)).execute().use { response ->
                         tags = try {
-                            json.decodeFromString(response.body?.string()!!)
+                            val responseBody = response.body
+                            if (responseBody != null) {
+                                responseBody.use { json.decodeFromString(it.string()) }
+                            } else {
+                                Log.e(LOG_TAG, "error while decoding JSON for tags filter: response body is null. Response code: ${response.code}")
+                                emptySet()
+                            }
                         } catch (e: Exception) {
+                            Log.e(LOG_TAG, "error while decoding JSON for tags filter", e)
                             emptySet()
                         }
-                    },
-                    { tr ->
-                        Log.e(LOG_TAG, "error while loading tags for filters", tr)
                     }
-                )
+                } catch (e: Exception) {
+                    Log.e(LOG_TAG, "error while loading tags for filters", e)
+                }
 
-            Single.fromCallable {
-                client.newCall(GET("$baseUrl/api/v1/publishers", headers)).execute()
-            }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { response ->
+                try {
+                    client.newCall(GET("$baseUrl/api/v1/publishers", headers)).execute().use { response ->
                         publishers = try {
-                            json.decodeFromString(response.body?.string()!!)
+                            val responseBody = response.body
+                            if (responseBody != null) {
+                                responseBody.use { json.decodeFromString(it.string()) }
+                            } else {
+                                Log.e(LOG_TAG, "error while decoding JSON for publishers filter: response body is null. Response code: ${response.code}")
+                                emptySet()
+                            }
                         } catch (e: Exception) {
+                            Log.e(LOG_TAG, "error while decoding JSON for publishers filter", e)
                             emptySet()
                         }
-                    },
-                    { tr ->
-                        Log.e(LOG_TAG, "error while loading publishers for filters", tr)
                     }
-                )
+                } catch (e: Exception) {
+                    Log.e(LOG_TAG, "error while loading publishers for filters", e)
+                }
 
-            Single.fromCallable {
-                client.newCall(GET("$baseUrl/api/v1/authors", headers)).execute()
-            }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                    { response ->
+                try {
+                    client.newCall(GET("$baseUrl/api/v1/authors", headers)).execute().use { response ->
                         authors = try {
-                            val list: List<AuthorDto> = json.decodeFromString(response.body?.string()!!)
-                            list.groupBy { it.role }
+                            val responseBody = response.body
+                            if (responseBody != null) {
+                                val list: List<AuthorDto> = responseBody.use { json.decodeFromString(it.string()) }
+                                list.groupBy { it.role }
+                            } else {
+                                Log.e(LOG_TAG, "error while decoding JSON for authors filter: response body is null. Response code: ${response.code}")
+                                emptyMap()
+                            }
                         } catch (e: Exception) {
+                            Log.e(LOG_TAG, "error while decoding JSON for authors filter", e)
                             emptyMap()
                         }
-                    },
+                    }
+                } catch (e: Exception) {
+                    Log.e(LOG_TAG, "error while loading authors for filters", e)
+                }
+            }
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .subscribe(
+                    {},
                     { tr ->
-                        Log.e(LOG_TAG, "error while loading authors for filters", tr)
+                        Log.e(LOG_TAG, "error while doing initial calls", tr)
                     }
                 )
         }

@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.en.hentai2read
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -22,7 +21,6 @@ import rx.Observable
 import java.util.Calendar
 import java.util.regex.Pattern
 
-@Nsfw
 class Hentai2Read : ParsedHttpSource() {
 
     override val name = "Hentai2Read"
@@ -42,10 +40,6 @@ class Hentai2Read : ParsedHttpSource() {
 
         val pagesUrlPattern by lazy {
             Pattern.compile("""'images' : \[\"(.*?)[,]?\"\]""")
-        }
-
-        val chapterDatePattern by lazy {
-            Pattern.compile("""about (\d+\s+\w+\s+ago)""")
         }
 
         lateinit var nextSearchPage: String
@@ -212,37 +206,43 @@ class Hentai2Read : ParsedHttpSource() {
     override fun chapterFromElement(element: Element): SChapter {
         return SChapter.create().apply {
             setUrlWithoutDomain(element.attr("href"))
+            var time = element.select("div > small").text().substringAfter("about").substringBefore("ago")
             name = element.ownText().trim()
-            date_upload = element.select("div > small").text()?.let {
-                val matcher = chapterDatePattern.matcher(it)
-                if (matcher.find()) {
-                    parseChapterDate(matcher.group(1)!!)
-                } else {
-                    0L
-                }
-            } ?: 0L
+            if (time != "") {
+                date_upload = parseChapterDate(time)
+            }
         }
     }
 
     private fun parseChapterDate(date: String): Long {
-        val dateWords = date.split(" ")
-        if (dateWords.size == 3) {
-            val timeAgo = Integer.parseInt(dateWords[0])
-            return Calendar.getInstance().apply {
-                when (dateWords[1]) {
-                    "minute", "minutes" -> Calendar.MINUTE
-                    "hour", "hours" -> Calendar.HOUR
-                    "day", "days" -> Calendar.DAY_OF_YEAR
-                    "week", "weeks" -> Calendar.WEEK_OF_YEAR
-                    "month", "months" -> Calendar.MONTH
-                    "year", "years" -> Calendar.YEAR
-                    else -> null
-                }?.let {
-                    add(it, -timeAgo)
-                }
+        val value = date.replace(Regex("[^\\d]"), "").toInt()
+
+        return when {
+            "second" in date -> Calendar.getInstance().apply {
+                add(Calendar.SECOND, value * -1)
             }.timeInMillis
+            "minute" in date -> Calendar.getInstance().apply {
+                add(Calendar.MINUTE, value * -1)
+            }.timeInMillis
+            "hour" in date -> Calendar.getInstance().apply {
+                add(Calendar.HOUR_OF_DAY, value * -1)
+            }.timeInMillis
+            "day" in date -> Calendar.getInstance().apply {
+                add(Calendar.DATE, value * -1)
+            }.timeInMillis
+            "week" in date -> Calendar.getInstance().apply {
+                add(Calendar.DATE, value * 7 * -1)
+            }.timeInMillis
+            "month" in date -> Calendar.getInstance().apply {
+                add(Calendar.MONTH, value * -1)
+            }.timeInMillis
+            "year" in date -> Calendar.getInstance().apply {
+                add(Calendar.YEAR, value * -1)
+            }.timeInMillis
+            else -> {
+                return 0
+            }
         }
-        return 0L
     }
 
     override fun pageListParse(response: Response): List<Page> {

@@ -6,8 +6,8 @@ ext {
     extName = 'Tao Sect'
     pkgNameSuffix = 'pt.taosect'
     extClass = '.TaoSect'
-    extVersionCode = 12
-    containsNsfw = true
+    extVersionCode = 13
+    isNsfw = true
 }
 
 dependencies {

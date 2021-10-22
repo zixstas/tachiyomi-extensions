@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.pt.taosect
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -28,7 +27,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-@Nsfw
 class TaoSect : HttpSource() {
 
     override val name = "Tao Sect"
@@ -321,7 +319,7 @@ class TaoSect : HttpSource() {
         val apiUrl = "$baseUrl/$API_BASE_PATH/capitulos/".toHttpUrl().newBuilder()
             .addPathSegment(projectSlug)
             .addPathSegment(chapterSlug)
-            .addQueryParameter("_fields", "paginas")
+            .addQueryParameter("_fields", "id_capitulo,paginas,post_id")
             .toString()
 
         return GET(apiUrl, apiHeaders)
@@ -343,6 +341,10 @@ class TaoSect : HttpSource() {
         val pages = result.pages.mapIndexed { i, pageUrl ->
             Page(i, chapterUrl, pageUrl)
         }
+
+        // Count the project and chapter views, requested by the scanlator.
+        val countViewRequest = countProjectViewRequest(result.projectId!!, result.id)
+        runCatching { client.newCall(countViewRequest).execute().close() }
 
         // Check if the pages have exceeded the view limit of Google Drive.
         val firstPage = pages[0]
@@ -375,11 +377,16 @@ class TaoSect : HttpSource() {
         return GET(page.imageUrl!!, newHeaders)
     }
 
-    private fun countProjectViewRequest(projectId: String): Request {
-        val formBody = FormBody.Builder()
+    private fun countProjectViewRequest(projectId: String, chapterId: String? = null): Request {
+        val formBodyBuilder = FormBody.Builder()
             .add("action", "update_views_v2")
             .add("projeto", projectId)
-            .build()
+
+        if (chapterId != null) {
+            formBodyBuilder.add("capitulo", chapterId)
+        }
+
+        val formBody = formBodyBuilder.build()
 
         val newHeaders = headersBuilder()
             .add("Content-Length", formBody.contentLength().toString())

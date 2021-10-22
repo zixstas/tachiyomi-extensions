@@ -6,7 +6,6 @@ import com.github.salomonbrys.kotson.fromJson
 import com.github.salomonbrys.kotson.get
 import com.google.gson.Gson
 import com.google.gson.JsonObject
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -28,7 +27,6 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-@Nsfw
 class Doujins : HttpSource() {
 
     override val baseUrl: String = "https://doujins.com"
@@ -48,10 +46,12 @@ class Doujins : HttpSource() {
     override fun chapterListParse(response: Response): List<SChapter> {
         return listOf(
             SChapter.create().apply {
+                var element = response.asJsoup()
                 name = "Chapter"
+                scanlator = element.select("div.folder-message:contains(Translated)").text().substringAfter("by:").trim()
                 setUrlWithoutDomain(response.request.url.toString())
 
-                val dateAndPageCountString = response.asJsoup().select(".text-md-right.text-sm-left > .folder-message").text()
+                val dateAndPageCountString = element.select(".text-md-right.text-sm-left > .folder-message").text()
 
                 val date = dateAndPageCountString.substringBefore(" • ")
                 for (dateFormat in MANGA_DETAILS_DATE_FORMAT) {

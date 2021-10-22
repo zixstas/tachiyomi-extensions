@@ -17,6 +17,7 @@ import com.github.salomonbrys.kotson.toMap
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonParser
+import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -57,6 +58,7 @@ class LibManga : ConfigurableSource, HttpSource() {
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
+        .addNetworkInterceptor(RateLimitInterceptor(3))
         .build()
 
     private val baseOrig: String = "https://mangalib.me"
@@ -87,8 +89,7 @@ class LibManga : ConfigurableSource, HttpSource() {
     private fun latestUpdatesFromElement(element: Element): SManga {
         val manga = SManga.create()
         element.select("div.cover").first().let { img ->
-            manga.thumbnail_url = baseUrl + img.attr("data-src").substringAfter(baseUrl)
-                .replace("_thumb", "_250x350")
+            manga.thumbnail_url = img.attr("data-src").replace("_thumb", "_250x350")
         }
 
         element.select("a").first().let { link ->
@@ -149,7 +150,7 @@ class LibManga : ConfigurableSource, HttpSource() {
         val slug = el["slug"].string
         val cover = el["cover"].string
         title = el["name"].string
-        thumbnail_url = "$baseUrl/uploads/cover/$slug/cover/${cover}_250x350.jpg"
+        thumbnail_url = "$COVER_URL/uploads/cover/$slug/cover/${cover}_250x350.jpg"
         url = "/$slug"
     }
 
@@ -164,9 +165,9 @@ class LibManga : ConfigurableSource, HttpSource() {
         val body = document.select("div.media-info-list").first()
         val rawCategory = body.select("div.media-info-list__title:contains(Тип) + div").text()
         val category = when {
-            rawCategory == "Комикс западный" -> "комикс"
-            rawCategory.isNotBlank() -> rawCategory.toLowerCase(Locale.ROOT)
-            else -> "манга"
+            rawCategory == "Комикс западный" -> "Комикс"
+            rawCategory.isNotBlank() -> rawCategory
+            else -> "Манга"
         }
         var rawAgeStop = body.select("div.media-info-list__title:contains(Возрастной рейтинг) + div").text()
         if (rawAgeStop.isEmpty()) {
@@ -188,9 +189,9 @@ class LibManga : ConfigurableSource, HttpSource() {
             ratingValue > 0.5 -> "✬☆☆☆☆"
             else -> "☆☆☆☆☆"
         }
-        val genres = document.select(".media-tags > a").map { it.text() }
+        val genres = document.select(".media-tags > a").map { it.text().capitalize() }
         manga.title = document.select(".media-name__alt").text()
-        manga.thumbnail_url = document.select(".media-sidebar__cover > img").attr("src").substringAfter(baseOrig)
+        manga.thumbnail_url = document.select(".media-sidebar__cover > img").attr("src")
         manga.author = body.select("div.media-info-list__title:contains(Автор) + div").text()
         manga.artist = body.select("div.media-info-list__title:contains(Художник) + div").text()
         manga.status = if (document.html().contains("Манга удалена по просьбе правообладателей") ||
@@ -778,6 +779,8 @@ class LibManga : ConfigurableSource, HttpSource() {
 
         private const val DOMAIN_PREF = "MangaLibDomain"
         private const val DOMAIN_PREF_Title = "Выбор домена"
+
+        private const val COVER_URL = "https://staticlib.me"
     }
 
     private var server: String? = preferences.getString(SERVER_PREF, null)

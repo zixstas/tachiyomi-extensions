@@ -257,13 +257,17 @@ abstract class Luscious(
                     nextPage = data["info"]["has_next_page"].asBoolean
                     data["items"].asJsonArray.map {
                         val chapter = SChapter.create()
-                        chapter.url = when (getResolutionPref()) {
+                        val url = when (getResolutionPref()) {
                             "-1" -> it["url_to_original"].asString
                             else -> it["thumbnails"][getResolutionPref()?.toInt()!!]["url"].asString
                         }
-                        chapter.name = it["title"].asString
-                        chapter.date_upload = "${it["created"].asLong}000".toLong()
+                        when {
+                            url.startsWith("//") -> chapter.url = "https:$url"
+                            else -> chapter.url = url
+                        }
                         chapter.chapter_number = it["position"].asInt.toFloat()
+                        chapter.name = chapter.chapter_number.toInt().toString() + " - " + it["title"].asString
+                        chapter.date_upload = "${it["created"].asLong}000".toLong()
                         chapters.add(chapter)
                     }
                     if (nextPage) {
@@ -335,8 +339,10 @@ abstract class Luscious(
                     "-1" -> it["url_to_original"].asString
                     else -> it["thumbnails"][getResolutionPref()?.toInt()!!]["url"].asString
                 }
-
-                pages.add(Page(index, url, url))
+                when {
+                    url.startsWith("//") -> pages.add(Page(index, "https:$url", "https:$url"))
+                    else -> pages.add(Page(index, url, url))
+                }
             }
             if (nextPage) {
                 val newPage = client.newCall(GET(buildAlbumPicturesPageUrl(id, page))).execute()
@@ -550,6 +556,7 @@ abstract class Luscious(
             SelectFilterOption("Date - Trending", "date_trending"),
             SelectFilterOption("Date - Featured", "date_featured"),
             SelectFilterOption("Date - Last Viewed", "date_last_interaction"),
+            SelectFilterOption("Other - Search Score", "search_score"),
         ).forEach {
             sortOptions.add(it)
         }

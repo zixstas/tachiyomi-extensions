@@ -5,8 +5,8 @@ ext {
     extName = 'Doujins'
     pkgNameSuffix = 'en.doujins'
     extClass = '.Doujins'
-    extVersionCode = 3
-    containsNsfw = true
+    extVersionCode = 4
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

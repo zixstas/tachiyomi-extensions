@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.pt.seikouscans
 
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import okhttp3.OkHttpClient
@@ -8,7 +7,6 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-@Nsfw
 class SeikouScans : Madara(
     "Seikou Scans",
     "https://seikouscans.com",
@@ -21,6 +19,8 @@ class SeikouScans : Madara(
         .build()
 
     override val altName: String = "Nome alternativo: "
+
+    override val useNewChapterEndpoint = true
 
     override fun popularMangaSelector() = "div.page-item-detail.manga"
 }

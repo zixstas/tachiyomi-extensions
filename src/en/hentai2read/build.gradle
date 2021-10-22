@@ -5,8 +5,8 @@ ext {
     extName = 'Hentai2Read'
     pkgNameSuffix = 'en.hentai2read'
     extClass = '.Hentai2Read'
-    extVersionCode = 12
-    containsNsfw = true
+    extVersionCode = 13
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

@@ -14,10 +14,10 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
     override val sources = listOf(
         SingleLang("Anitation Arts", "https://anitationarts.org", "en", overrideVersionCode = 1),
         SingleLang("Alpha Scans", "https://alpha-scans.org", "en"),
-        SingleLang("AR FlameScans", "https://ar.flamescans.org", "ar"),
+        SingleLang("AR FlameScans", "https://ar.flamescans.org", "ar", overrideVersionCode = 1),
         SingleLang("iiMANGA", "https://iimanga.com", "ar"),
         SingleLang("Magus Manga", "https://magusmanga.com", "ar"),
-        SingleLang("Kiryuu", "https://kiryuu.id", "id", overrideVersionCode = 2),
+        SingleLang("Kiryuu", "https://kiryuu.id", "id", overrideVersionCode = 3),
         SingleLang("KomikMama", "https://komikmama.net", "id"),
         SingleLang("MangaKita", "https://mangakita.net", "id", overrideVersionCode = 1),
         SingleLang("Gabut Scans", "https://gabutscans.com", "id"),
@@ -42,6 +42,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Fusion Scanlation", "https://fusionscanlation.com", "es", className = "FusionScanlation", overrideVersionCode = 1),
         SingleLang("Ace Scans", "https://acescans.xyz", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Silence Scan", "https://silencescan.com.br", "pt-BR", isNsfw = true, overrideVersionCode = 5),
+        SingleLang("YANP Fansub", "https://yanpfansub.com", "pt-BR", isNsfw = true)
     )
 
     companion object {

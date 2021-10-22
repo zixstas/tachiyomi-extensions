@@ -5,8 +5,8 @@ ext {
     extName = 'HBrowse'
     pkgNameSuffix = 'en.hbrowse'
     extClass = '.HBrowse'
-    extVersionCode = 5
-    containsNsfw = true
+    extVersionCode = 6
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"
