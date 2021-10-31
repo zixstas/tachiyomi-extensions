@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.preference.ListPreference
+import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.extension.all.mangadex.dto.AggregateDto
@@ -65,52 +66,19 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             addQueryParameter("limit", MDConstants.mangaLimit.toString())
             addQueryParameter("offset", helper.getMangaListOffset(page))
             addQueryParameter("includes[]", MDConstants.coverArt)
-            if (preferences.getBoolean(MDConstants.getContentRatingSafePrefKey(dexLang), false)) {
-                addQueryParameter("contentRating[]", "safe")
-            }
-            if (preferences.getBoolean(
-                    MDConstants.getContentRatingSuggestivePrefKey(dexLang),
-                    false
-                )
-            ) {
-                addQueryParameter("contentRating[]", "suggestive")
-            }
-            if (preferences.getBoolean(
-                    MDConstants.getContentRatingEroticaPrefKey(dexLang),
-                    false
-                )
-            ) {
-                addQueryParameter("contentRating[]", "erotica")
-            }
-            if (preferences.getBoolean(
-                    MDConstants.getContentRatingPornographicPrefKey(dexLang),
-                    false
-                )
-            ) {
-                addQueryParameter("contentRating[]", "pornographic")
-            }
-            if (preferences.getBoolean(
-                    MDConstants.getOriginalLanguageJapanesePref(dexLang),
-                    false
-                )
-            ) {
-                addQueryParameter("originalLanguage[]", "ja")
-            }
-            // dex has zh and zh-hk for chinese manhua
-            if (preferences.getBoolean(
-                    MDConstants.getOriginalLanguageChinesePref(dexLang),
-                    false
-                )
-            ) {
-                addQueryParameter("originalLanguage[]", "zh")
-                addQueryParameter("originalLanguage[]", "zh-hk")
-            }
-            if (preferences.getBoolean(
-                    MDConstants.getOriginalLanguageKoreanPref(dexLang),
-                    false
-                )
-            ) {
-                addQueryParameter("originalLanguage[]", "ko")
+            preferences.getStringSet(
+                MDConstants.getContentRatingPrefKey(dexLang),
+                MDConstants.contentRatingPrefDefaults
+            )?.forEach { addQueryParameter("contentRating[]", it) }
+            preferences.getStringSet(
+                MDConstants.getOriginalLanguagePrefKey(dexLang),
+                setOf()
+            )?.forEach {
+                addQueryParameter("originalLanguage[]", it)
+                // dex has zh and zh-hk for chinese manhua
+                if (it == MDConstants.originalLanguagePrefValChinese) {
+                    addQueryParameter("originalLanguage[]", MDConstants.originalLanguagePrefValChineseHk)
+                }
             }
         }.build().toUrl().toString()
         return GET(
@@ -143,7 +111,7 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
         return MangasPage(mangaList, hasMoreResults)
     }
 
-    // LATEST section  API can't sort by date yet so not implemented
+    // LATEST section API can't sort by date yet so not implemented
     override fun latestUpdatesParse(response: Response): MangasPage {
         val chapterListDto = helper.json.decodeFromString<ChapterListDto>(response.body!!.string())
         val hasMoreResults = chapterListDto.limit + chapterListDto.offset < chapterListDto.total
@@ -155,18 +123,10 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             addQueryParameter("includes[]", MDConstants.coverArt)
             addQueryParameter("limit", mangaIds.size.toString())
 
-            if (preferences.getBoolean(MDConstants.getContentRatingSafePrefKey(dexLang), true)) {
-                addQueryParameter("contentRating[]", "safe")
-            }
-            if (preferences.getBoolean(MDConstants.getContentRatingSuggestivePrefKey(dexLang), true)) {
-                addQueryParameter("contentRating[]", "suggestive")
-            }
-            if (preferences.getBoolean(MDConstants.getContentRatingEroticaPrefKey(dexLang), false)) {
-                addQueryParameter("contentRating[]", "erotica")
-            }
-            if (preferences.getBoolean(MDConstants.getContentRatingPornographicPrefKey(dexLang), false)) {
-                addQueryParameter("contentRating[]", "pornographic")
-            }
+            preferences.getStringSet(
+                MDConstants.getContentRatingPrefKey(dexLang),
+                MDConstants.contentRatingPrefDefaults
+            )?.forEach { addQueryParameter("contentRating[]", it) }
 
             mangaIds.forEach { id ->
                 addQueryParameter("ids[]", id)
@@ -197,29 +157,20 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             addQueryParameter("translatedLanguage[]", dexLang)
             addQueryParameter("order[publishAt]", "desc")
             addQueryParameter("includeFutureUpdates", "0")
-            if (preferences.getBoolean(MDConstants.getOriginalLanguageJapanesePref(dexLang), false)) {
-                addQueryParameter("originalLanguage[]", "ja")
+            preferences.getStringSet(
+                MDConstants.getOriginalLanguagePrefKey(dexLang),
+                setOf()
+            )?.forEach {
+                addQueryParameter("originalLanguage[]", it)
+                // dex has zh and zh-hk for chinese manhua
+                if (it == MDConstants.originalLanguagePrefValChinese) {
+                    addQueryParameter("originalLanguage[]", MDConstants.originalLanguagePrefValChineseHk)
+                }
             }
-            // dex has zh and zh-hk for chinese manhua
-            if (preferences.getBoolean(MDConstants.getOriginalLanguageChinesePref(dexLang), false)) {
-                addQueryParameter("originalLanguage[]", "zh")
-                addQueryParameter("originalLanguage[]", "zh-hk")
-            }
-            if (preferences.getBoolean(MDConstants.getOriginalLanguageKoreanPref(dexLang), false)) {
-                addQueryParameter("originalLanguage[]", "ko")
-            }
-            if (preferences.getBoolean(MDConstants.getContentRatingSafePrefKey(dexLang), true)) {
-                addQueryParameter("contentRating[]", "safe")
-            }
-            if (preferences.getBoolean(MDConstants.getContentRatingSuggestivePrefKey(dexLang), true)) {
-                addQueryParameter("contentRating[]", "suggestive")
-            }
-            if (preferences.getBoolean(MDConstants.getContentRatingEroticaPrefKey(dexLang), false)) {
-                addQueryParameter("contentRating[]", "erotica")
-            }
-            if (preferences.getBoolean(MDConstants.getContentRatingPornographicPrefKey(dexLang), false)) {
-                addQueryParameter("contentRating[]", "pornographic")
-            }
+            preferences.getStringSet(
+                MDConstants.getContentRatingPrefKey(dexLang),
+                MDConstants.contentRatingPrefDefaults
+            )?.forEach { addQueryParameter("contentRating[]", it) }
         }.build().toString()
         return GET(url, headers, CacheControl.FORCE_NETWORK)
     }
@@ -504,102 +455,41 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
             }
         }
 
-        val contentRatingSafePref = SwitchPreferenceCompat(screen.context).apply {
-            key = MDConstants.getContentRatingSafePrefKey(dexLang)
-            title = "Safe"
-            summary = "If enabled, shows content with the rating of safe (manga without any sexual themes)"
-            setDefaultValue(true)
-
+        val contentRatingPref = MultiSelectListPreference(screen.context).apply {
+            key = MDConstants.getContentRatingPrefKey(dexLang)
+            title = "Default content rating"
+            summary = "Show content with the selected ratings by default"
+            entries = arrayOf("Safe", "Suggestive", "Erotica", "Pornographic")
+            entryValues = arrayOf(
+                MDConstants.contentRatingPrefValSafe,
+                MDConstants.contentRatingPrefValSuggestive,
+                MDConstants.contentRatingPrefValErotica,
+                MDConstants.contentRatingPrefValPornographic
+            )
+            setDefaultValue(MDConstants.contentRatingPrefDefaults)
             setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
+                val checkValue = newValue as Set<String>
                 preferences.edit()
-                    .putBoolean(MDConstants.getContentRatingSafePrefKey(dexLang), checkValue)
+                    .putStringSet(MDConstants.getContentRatingPrefKey(dexLang), checkValue)
                     .commit()
             }
         }
 
-        val contentRatingSuggestivePref = SwitchPreferenceCompat(screen.context).apply {
-            key = MDConstants.getContentRatingSuggestivePrefKey(dexLang)
-            title = "Suggestive"
-            summary = "If enabled, shows content with the rating of suggestive (manga usually tagged as ecchi)"
-            setDefaultValue(true)
-
+        val originalLanguagePref = MultiSelectListPreference(screen.context).apply {
+            key = MDConstants.getOriginalLanguagePrefKey(dexLang)
+            title = "Filter original languages"
+            summary = "Only show content that was originally published in the selected languages in both latest and browse"
+            entries = arrayOf("Japanese", "Chinese", "Korean")
+            entryValues = arrayOf(
+                MDConstants.originalLanguagePrefValJapanese,
+                MDConstants.originalLanguagePrefValChinese,
+                MDConstants.originalLanguagePrefValKorean
+            )
+            setDefaultValue(setOf<String>())
             setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
+                val checkValue = newValue as Set<String>
                 preferences.edit()
-                    .putBoolean(MDConstants.getContentRatingSuggestivePrefKey(dexLang), checkValue)
-                    .commit()
-            }
-        }
-
-        val contentRatingEroticaPref = SwitchPreferenceCompat(screen.context).apply {
-            key = MDConstants.getContentRatingEroticaPrefKey(dexLang)
-            title = "Erotica"
-            summary = "If enabled, shows content with the rating of erotica (manga usually tagged as smut)"
-            setDefaultValue(false)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
-                preferences.edit()
-                    .putBoolean(MDConstants.getContentRatingEroticaPrefKey(dexLang), checkValue)
-                    .commit()
-            }
-        }
-
-        val contentRatingPornographicPref = SwitchPreferenceCompat(screen.context).apply {
-            key = MDConstants.getContentRatingPornographicPrefKey(dexLang)
-            title = "Pornographic"
-            summary = "If enabled, shows content with the rating of pornographic (manga usually tagged as hentai)"
-            setDefaultValue(false)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
-                preferences.edit().putBoolean(
-                    MDConstants.getContentRatingPornographicPrefKey(dexLang),
-                    checkValue
-                )
-                    .commit()
-            }
-        }
-
-        val originalLanguageJapanesePref = SwitchPreferenceCompat(screen.context).apply {
-            key = MDConstants.getOriginalLanguageJapanesePref(dexLang)
-            title = "Japanese"
-            summary = "If enabled, only shows content that was originally published in Japanese in both latest and browse"
-            setDefaultValue(false)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
-                preferences.edit()
-                    .putBoolean(MDConstants.getOriginalLanguageJapanesePref(dexLang), checkValue)
-                    .commit()
-            }
-        }
-
-        val originalLanguageChinesePref = SwitchPreferenceCompat(screen.context).apply {
-            key = MDConstants.getOriginalLanguageChinesePref(dexLang)
-            title = "Chinese"
-            summary = "If enabled, only shows content that was originally published in Chinese in both latest and browse"
-            setDefaultValue(false)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
-                preferences.edit()
-                    .putBoolean(MDConstants.getOriginalLanguageChinesePref(dexLang), checkValue)
-                    .commit()
-            }
-        }
-
-        val originalLanguageKoreanPref = SwitchPreferenceCompat(screen.context).apply {
-            key = MDConstants.getOriginalLanguageKoreanPref(dexLang)
-            title = "Korean"
-            summary = "If enabled, only shows content that was originally published in Korean in both latest and browse"
-            setDefaultValue(false)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
-                preferences.edit()
-                    .putBoolean(MDConstants.getOriginalLanguageKoreanPref(dexLang), checkValue)
+                    .putStringSet(MDConstants.getOriginalLanguagePrefKey(dexLang), checkValue)
                     .commit()
             }
         }
@@ -607,13 +497,8 @@ abstract class MangaDex(override val lang: String, val dexLang: String) :
         screen.addPreference(coverQualityPref)
         screen.addPreference(dataSaverPref)
         screen.addPreference(standardHttpsPortPref)
-        screen.addPreference(contentRatingSafePref)
-        screen.addPreference(contentRatingSuggestivePref)
-        screen.addPreference(contentRatingEroticaPref)
-        screen.addPreference(contentRatingPornographicPref)
-        screen.addPreference(originalLanguageJapanesePref)
-        screen.addPreference(originalLanguageChinesePref)
-        screen.addPreference(originalLanguageKoreanPref)
+        screen.addPreference(contentRatingPref)
+        screen.addPreference(originalLanguagePref)
     }
 
     override fun getFilterList(): FilterList =

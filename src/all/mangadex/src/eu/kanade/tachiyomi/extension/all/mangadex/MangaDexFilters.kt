@@ -22,32 +22,30 @@ class MangaDexFilters {
         )
     }
 
-    private fun getContentRating(preferences: SharedPreferences, dexLang: String) = listOf(
-        ContentRating("Safe").apply {
-            state = preferences.getBoolean(
-                MDConstants.getContentRatingSafePrefKey(dexLang),
-                true
-            )
-        },
-        ContentRating("Suggestive").apply {
-            state = preferences.getBoolean(
-                MDConstants.getContentRatingSuggestivePrefKey(dexLang),
-                true
-            )
-        },
-        ContentRating("Erotica").apply {
-            state = preferences.getBoolean(
-                MDConstants.getContentRatingEroticaPrefKey(dexLang),
-                false
-            )
-        },
-        ContentRating("Pornographic").apply {
-            state = preferences.getBoolean(
-                MDConstants.getContentRatingPornographicPrefKey(dexLang),
-                false
-            )
-        },
-    )
+    private fun getContentRating(preferences: SharedPreferences, dexLang: String): List<ContentRating> {
+        val contentRatings = preferences.getStringSet(
+            MDConstants.getContentRatingPrefKey(dexLang),
+            MDConstants.contentRatingPrefDefaults
+        )
+        return listOf(
+            ContentRating("Safe").apply {
+                state = contentRatings
+                    ?.contains(MDConstants.contentRatingPrefValSafe) ?: true
+            },
+            ContentRating("Suggestive").apply {
+                state = contentRatings
+                    ?.contains(MDConstants.contentRatingPrefValSuggestive) ?: true
+            },
+            ContentRating("Erotica").apply {
+                state = contentRatings
+                    ?.contains(MDConstants.contentRatingPrefValErotica) ?: false
+            },
+            ContentRating("Pornographic").apply {
+                state = contentRatings
+                    ?.contains(MDConstants.contentRatingPrefValPornographic) ?: false
+            },
+        )
+    }
 
     private class Demographic(name: String) : Filter.CheckBox(name)
     private class DemographicList(demographics: List<Demographic>) :
@@ -80,26 +78,26 @@ class MangaDexFilters {
     private class OriginalLanguageList(originalLanguage: List<OriginalLanguage>) :
         Filter.Group<OriginalLanguage>("Original language", originalLanguage)
 
-    private fun getOriginalLanguage(preferences: SharedPreferences, dexLang: String) = listOf(
-        OriginalLanguage("Japanese (Manga)", "ja").apply {
-            state = preferences.getBoolean(
-                MDConstants.getOriginalLanguageJapanesePref(dexLang),
-                false
-            )
-        },
-        OriginalLanguage("Chinese (Manhua)", "zh").apply {
-            state = preferences.getBoolean(
-                MDConstants.getOriginalLanguageChinesePref(dexLang),
-                false
-            )
-        },
-        OriginalLanguage("Korean (Manhwa)", "ko").apply {
-            state = preferences.getBoolean(
-                MDConstants.getOriginalLanguageKoreanPref(dexLang),
-                false
-            )
-        },
-    )
+    private fun getOriginalLanguage(preferences: SharedPreferences, dexLang: String): List<OriginalLanguage> {
+        val originalLanguages = preferences.getStringSet(
+            MDConstants.getOriginalLanguagePrefKey(dexLang),
+            setOf()
+        )
+        return listOf(
+            OriginalLanguage("Japanese (Manga)", "ja").apply {
+                state = originalLanguages
+                    ?.contains(MDConstants.originalLanguagePrefValJapanese) ?: false
+            },
+            OriginalLanguage("Chinese (Manhua)", "zh").apply {
+                state = originalLanguages
+                    ?.contains(MDConstants.originalLanguagePrefValChinese) ?: false
+            },
+            OriginalLanguage("Korean (Manhwa)", "ko").apply {
+                state = originalLanguages
+                    ?.contains(MDConstants.originalLanguagePrefValKorean) ?: false
+            },
+        )
+    }
 
     internal class Tag(val id: String, name: String) : Filter.TriState(name)
     private class TagList(tags: List<Tag>) : Filter.Group<Tag>("Tags", tags)
@@ -211,10 +209,10 @@ class MangaDexFilters {
                         filter.state.forEach { lang ->
                             if (lang.state) {
                                 // dex has zh and zh-hk for chinese manhua
-                                if (lang.isoCode == "zh") {
+                                if (lang.isoCode == MDConstants.originalLanguagePrefValChinese) {
                                     addQueryParameter(
                                         "originalLanguage[]",
-                                        "zh-hk"
+                                        MDConstants.originalLanguagePrefValChineseHk
                                     )
                                 }
                                 addQueryParameter(
