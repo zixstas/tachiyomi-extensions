@@ -36,7 +36,7 @@ class WayManga : ParsedHttpSource() {
 
     override fun latestUpdatesSelector() = "div.row"
 
-    override fun searchMangaSelector() = "div.col-12 > div"
+    override fun searchMangaSelector() = "div.col-9 > a"
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
