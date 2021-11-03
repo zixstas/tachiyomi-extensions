@@ -13,7 +13,7 @@ class MadaraGenerator : ThemeSourceGenerator {
     override val baseVersionCode: Int = 11
 
     override val sources = listOf(
-        MultiLang("Leviatan Scans", "https://leviatanscans.com", listOf("en", "es"), className = "LeviatanScansFactory", overrideVersionCode = 7),
+        MultiLang("Leviatan Scans", "https://leviatanscans.com", listOf("en", "es"), className = "LeviatanScansFactory", overrideVersionCode = 8),
         MultiLang("MangaForFree.net", "https://mangaforfree.net", listOf("en", "ko", "all"), isNsfw = true, className = "MangaForFreeFactory", pkgName = "mangaforfree", overrideVersionCode = 1),
         MultiLang("Manhwa18.cc", "https://manhwa18.cc", listOf("en", "ko", "all"), isNsfw = true, className = "Manhwa18CcFactory", pkgName = "manhwa18cc"),
         MultiLang("Reaper Scans", "https://reaperscans.com", listOf("en", "pt-BR"), className = "ReaperScansFactory", pkgName = "reaperscans", overrideVersionCode = 2),
@@ -120,7 +120,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("InfraFandub", "https://infrafandub.xyz", "es"),
         SingleLang("Inmortal Scan", "https://manga.mundodrama.site", "es"),
         SingleLang("InstaManhwa", "https://www.instamanhwa.com", "en", isNsfw = true),
-        SingleLang("Iris Scanlator", "https://irisscanlator.com", "pt-BR", isNsfw = true),
         SingleLang("IsekaiScan.com", "https://isekaiscan.com", "en", className = "IsekaiScanCom", overrideVersionCode = 4),
         SingleLang("IsekaiScanManga (unoriginal)", "https://isekaiscanmanga.com", "en", className = "IsekaiScanManga", overrideVersionCode = 1),
         SingleLang("Its Your Right Manhua", "https://itsyourightmanhua.com/", "en", className = "ItsYourRightManhua", overrideVersionCode = 2),
@@ -284,7 +283,6 @@ class MadaraGenerator : ThemeSourceGenerator {
         SingleLang("ManyToonClub", "https://manytoon.club", "ko", isNsfw = true, overrideVersionCode = 1),
         SingleLang("ManyComic", "https://manycomic.com", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Mark Scans", "https://markscans.online", "pt-BR", overrideVersionCode = 3),
-        SingleLang("Mega Mangás", "https://megamanga.com.br", "pt-BR", isNsfw = true, className = "MegaMangas"),
         SingleLang("MHentais", "https://mhentais.com", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Mhmanga", "https://mhmanga.com", "en"),
         SingleLang("Midnight Mess Scans", "https://midnightmess.org", "en", isNsfw = true, overrideVersionCode = 5),
