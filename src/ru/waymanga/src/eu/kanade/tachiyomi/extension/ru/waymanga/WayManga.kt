@@ -32,15 +32,15 @@ class WayManga : ParsedHttpSource() {
         return GET("$baseUrl/search?query=$query")
     }
 
-    override fun popularMangaSelector() = "div.p-2 > div"
+    override fun popularMangaSelector() = "div.position-relative > a"
 
-    override fun latestUpdatesSelector() = "div.m-2"
+    override fun latestUpdatesSelector() = "div.row"
 
     override fun searchMangaSelector() = "div.col-9 > a"
 
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = element.select("div > img").first().attr("src")
+        manga.thumbnail_url = element.select("div.card-150 > img").first().attr("src")
         element.select("a").first().let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.text()
@@ -50,11 +50,11 @@ class WayManga : ParsedHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SManga {
         val manga = SManga.create()
-        manga.thumbnail_url = element.select("div > img").first().attr("src")
+        manga.thumbnail_url = element.select("img").first().attr("src")
         element.select("a").first().let {
             manga.setUrlWithoutDomain(it.attr("href"))
         }
-        element.select("div.col-6 > p").first().let {
+        element.select("div.col-6").first().let {
             manga.title = it.text()
         }
         return manga
@@ -91,7 +91,7 @@ class WayManga : ParsedHttpSource() {
             chapter.name = it.text()
         }
         chapter.setUrlWithoutDomain(urlElement.attr("href"))
-        chapter.date_upload = element.select("div.col-5 > div").text().toDate()
+        chapter.date_upload = element.select("div.col-5:eq(1)").text().toDate()
         return chapter
     }
 
