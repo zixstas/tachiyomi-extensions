@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.multisrc.wpmangareader
 
+import generator.ThemeSourceData.MultiLang
 import generator.ThemeSourceData.SingleLang
 import generator.ThemeSourceGenerator
 
@@ -12,9 +13,10 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
     override val baseVersionCode: Int = 11
 
     override val sources = listOf(
+        MultiLang("Flame Scans", "https://flamescans.org", listOf("ar", "en"), className = "FlameScansFactory", pkgName = "flamescans"),
         SingleLang("Anitation Arts", "https://anitationarts.org", "en", overrideVersionCode = 1),
         SingleLang("Alpha Scans", "https://alpha-scans.org", "en"),
-        SingleLang("AR FlameScans", "https://ar.flamescans.org", "ar", overrideVersionCode = 1),
+        SingleLang("BeastScans", "https://beastscans.com", "en"),
         SingleLang("iiMANGA", "https://iimanga.com", "ar"),
         SingleLang("Magus Manga", "https://magusmanga.com", "ar"),
         SingleLang("Kiryuu", "https://kiryuu.id", "id", overrideVersionCode = 3),
@@ -32,13 +34,14 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Gecenin Lordu", "https://geceninlordu.com/", "tr", overrideVersionCode = 1),
         SingleLang("A Pair of 2+", "https://pairof2.com", "en", className = "APairOf2"),
         SingleLang("PMScans", "https://reader.pmscans.com", "en"),
+        SingleLang("Realm Scans", "https://realmscans.xyz", "en"),
         SingleLang("Skull Scans", "https://www.skullscans.com", "en"),
         SingleLang("Shimada Scans", "https://shimadascans.com", "en"),
+        SingleLang("Shooting Star Scans", "https://shootingstarscans.com", "en", overrideVersionCode = 3),
         SingleLang("Luminous Scans", "https://www.luminousscans.com", "en", overrideVersionCode = 1),
         SingleLang("Azure Scans", "https://azuremanga.com", "en"),
         SingleLang("ReaperScans.fr (GS)", "https://reaperscans.fr", "fr", className = "ReaperScansFR", pkgName = "gsnation", overrideVersionCode = 2),
         SingleLang("YugenMangas", "https://yugenmangas.com", "es"),
-        SingleLang("DragonTranslation", "https://dragontranslation.com", "es", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Patatescans", "https://patatescans.com", "fr", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Fusion Scanlation", "https://fusionscanlation.com", "es", className = "FusionScanlation", overrideVersionCode = 1),
         SingleLang("Ace Scans", "https://acescans.xyz", "en", isNsfw = true, overrideVersionCode = 1),

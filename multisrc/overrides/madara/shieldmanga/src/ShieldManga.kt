@@ -15,6 +15,4 @@ class ShieldManga : Madara("Shield Manga", "https://shieldmanga.club", "en") {
         .build()
 
     override fun chapterListSelector() = "li.wp-manga-hapter, .version-chap li"
-
-    override val pageListParseSelector = "div.page-beak, .reading-content div"
 }

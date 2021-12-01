@@ -54,10 +54,12 @@ abstract class Madara(
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/78.0$userAgentRandomizer")
+        .add("Referer", baseUrl)
 
     // Popular Manga
 
-    override fun popularMangaSelector() = "div.page-item-detail"
+    // exclude/filter bilibili manga from list
+    override fun popularMangaSelector() = "div.page-item-detail:not(:has(a[href*='bilibilicomics.com']))"
 
     open val popularMangaUrlSelector = "div.post-title a"
 
@@ -319,20 +321,20 @@ abstract class Madara(
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
         with(document) {
-            select("div.post-title h3").first()?.let {
+            select(mangaDetailsSelectorTitle).first()?.let {
                 manga.title = it.ownText()
             }
-            select("div.author-content > a").eachText().filter {
+            select(mangaDetailsSelectorAuthor).eachText().filter {
                 it.notUpdating()
             }.joinToString().takeIf { it.isNotBlank() }?.let {
                 manga.author = it
             }
-            select("div.artist-content > a").eachText().filter {
+            select(mangaDetailsSelectorArtist).eachText().filter {
                 it.notUpdating()
             }.joinToString().takeIf { it.isNotBlank() }?.let {
                 manga.artist = it
             }
-            select("div.description-summary div.summary__content").let {
+            select(mangaDetailsSelectorDescription).let {
                 if (it.select("p").text().isNotEmpty()) {
                     manga.description = it.select("p").joinToString(separator = "\n\n") { p ->
                         p.text().replace("<br>", "\n")
@@ -341,10 +343,10 @@ abstract class Madara(
                     manga.description = it.text()
                 }
             }
-            select("div.summary_image img").first()?.let {
+            select(mangaDetailsSelectorThumbnail).first()?.let {
                 manga.thumbnail_url = imageFromElement(it)
             }
-            select("div.summary-content").last()?.let {
+            select(mangaDetailsSelectorStatus).last()?.let {
                 manga.status = when (it.text()) {
                     // I don't know what's the corresponding for COMPLETED and LICENSED
                     // There's no support for "Canceled" or "On Hold"
@@ -353,12 +355,12 @@ abstract class Madara(
                     else -> SManga.UNKNOWN
                 }
             }
-            val genres = select("div.genres-content a")
+            val genres = select(mangaDetailsSelectorGenre)
                 .map { element -> element.text().toLowerCase(Locale.ROOT) }
                 .toMutableSet()
 
             // add tag(s) to genre
-            select("div.tags-content a").forEach { element ->
+            select(mangaDetailsSelectorTag).forEach { element ->
                 if (genres.contains(element.text()).not()) {
                     genres.add(element.text().toLowerCase(Locale.ROOT))
                 }
@@ -387,6 +389,16 @@ abstract class Madara(
         return manga
     }
 
+    // Manga Details Selector
+    open val mangaDetailsSelectorTitle = "div.post-title h3"
+    open val mangaDetailsSelectorAuthor = "div.author-content > a"
+    open val mangaDetailsSelectorArtist = "div.artist-content > a"
+    open val mangaDetailsSelectorStatus = "div.summary-content"
+    open val mangaDetailsSelectorDescription = "div.description-summary div.summary__content"
+    open val mangaDetailsSelectorThumbnail = "div.summary_image img"
+    open val mangaDetailsSelectorGenre = "div.genres-content a"
+    open val mangaDetailsSelectorTag = "div.tags-content a"
+
     open val seriesTypeSelector = ".post-content_item:contains(Type) .summary-content"
     open val altNameSelector = ".post-content_item:contains(Alt) .summary-content"
     open val altName = "Alternative Name" + ": "
@@ -410,6 +422,14 @@ abstract class Madara(
      * fetch the manga chapters instead of the old admin-ajax.php one.
      */
     protected open val useNewChapterEndpoint: Boolean = false
+
+    /**
+     * Internal attribute to control if it should always use the
+     * new chapter endpoint after a first check if useNewChapterEndpoint is
+     * set to false. Using a separate variable to still allow the other
+     * one to be overridable manually in each source.
+     */
+    private var oldChapterEndpointDisabled: Boolean = false
 
     protected open fun oldXhrChaptersRequest(mangaId: String): Request {
         val form = FormBody.Builder()
@@ -446,8 +466,19 @@ abstract class Madara(
             val mangaUrl = document.location().removeSuffix("/")
             val mangaId = chaptersWrapper.attr("data-id")
 
-            val xhrRequest = if (useNewChapterEndpoint) xhrChaptersRequest(mangaUrl) else oldXhrChaptersRequest(mangaId)
-            val xhrResponse = client.newCall(xhrRequest).execute()
+            var xhrRequest = if (useNewChapterEndpoint || oldChapterEndpointDisabled)
+                xhrChaptersRequest(mangaUrl) else oldXhrChaptersRequest(mangaId)
+            var xhrResponse = client.newCall(xhrRequest).execute()
+
+            // Newer Madara versions throws HTTP 400 when using the old endpoint.
+            if (!useNewChapterEndpoint && xhrResponse.code == 400) {
+                xhrResponse.close()
+                // Set it to true so following calls will be made directly to the new endpoint.
+                oldChapterEndpointDisabled = true
+
+                xhrRequest = xhrChaptersRequest(mangaUrl)
+                xhrResponse = client.newCall(xhrRequest).execute()
+            }
 
             chapterElements = xhrResponse.asJsoup().select(chapterListSelector())
             xhrResponse.close()
@@ -564,7 +595,7 @@ abstract class Madara(
         return super.pageListRequest(chapter)
     }
 
-    open val pageListParseSelector = "div.page-break, li.blocks-gallery-item"
+    open val pageListParseSelector = "div.page-break, li.blocks-gallery-item, .reading-content .text-left:not(:has(.blocks-gallery-item)) :has(>img)"
 
     override fun pageListParse(document: Document): List<Page> {
         countViews(document)
