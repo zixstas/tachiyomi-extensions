@@ -360,9 +360,11 @@ abstract class Madara(
                 .toMutableSet()
 
             // add tag(s) to genre
-            select(mangaDetailsSelectorTag).forEach { element ->
-                if (genres.contains(element.text()).not()) {
-                    genres.add(element.text().toLowerCase(Locale.ROOT))
+            if (mangaDetailsSelectorTag.isNotEmpty()) {
+                select(mangaDetailsSelectorTag).forEach { element ->
+                    if (genres.contains(element.text()).not()) {
+                        genres.add(element.text().toLowerCase(Locale.ROOT))
+                    }
                 }
             }
 

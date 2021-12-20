@@ -32,12 +32,12 @@ class MMRCMSSources {
                 override val overrideVersionCode: Int = 0,
             ) : SourceData()
         }
-        val version: Int = 4
+        val version: Int = 5
         val sourceList: List<SourceData.Single> = listOf(
             SourceData.Single("مانجا اون لاين", "https://onma.me", "ar", className = "onma"),
             SourceData.Single("Read Comics Online", "https://readcomicsonline.ru", "en"),
             SourceData.Single("Fallen Angels", "https://manga.fascans.com", "en", overrideVersionCode = 2),
-            SourceData.Single("Zahard", "https://zahard.top", "en", overrideVersionCode = 1),
+            SourceData.Single("Zahard", "https://zahard.xyz", "en", overrideVersionCode = 2),
             SourceData.Single("Manhwas Men", "https://manhwas.men", "en", isNsfw = true, overrideVersionCode = 1),
             SourceData.Single("Scan FR", "https://www.scan-fr.cc", "fr"),
             SourceData.Single("Scan VF", "https://www.scan-vf.net", "fr"),
@@ -57,7 +57,7 @@ class MMRCMSSources {
             SourceData.Single("Mangazuki Raws", "https://raws.mangazuki.co", "ko"),
             SourceData.Single("Mangazuki", "https://mangazuki.co", "en"),
             SourceData.Single("Remangas", "https://remangas.top", "pt-BR", overrideVersionCode = 2),
-            SourceData.Single("AnimaRegia", "https://animaregia.net", "pt-BR", overrideVersionCode = 2),
+            SourceData.Single("AnimaRegia", "https://animaregia.net", "pt-BR", overrideVersionCode = 3),
             SourceData.Single("MangaVadisi", "http://manga-v2.mangavadisi.org", "tr"),
             SourceData.Single("MangaID", "https://mangaid.click", "id"),
             SourceData.Single("Jpmangas", "https://jpmangas.co", "fr"),
@@ -65,6 +65,7 @@ class MMRCMSSources {
             SourceData.Single("FR Scan", "https://frscan.cc", "fr"),
             SourceData.Single("Ama Scans", "https://amascan.com", "pt-BR", isNsfw = true, overrideVersionCode = 1),
             SourceData.Single("Gekkou Scans", "https://gekkouscans.com.br", "pt-BR", isNsfw = true, pkgName = "gekkouscan", overrideVersionCode = 8),
+            SourceData.Single("White Cloud Pavilion", "https://whitecloudpavilion.com/manga/patreon", "en"),
             // NOTE: THIS SOURCE CONTAINS A CUSTOM LANGUAGE SYSTEM (which will be ignored)!
             SourceData.Single("HentaiShark", "https://www.hentaishark.com", "all", isNsfw = true),
             // MultiLang("HentaiShark", "https://www.hentaishark.com", listOf("en", "ja", "zh", "de", "nl", "ko", "cz", "eo", "mn", "ar", "sk", "la", "ua", "ceb", "tl", "fi", "bg", "tr"), isNsfw = true, className = "HentaiSharkFactory"),

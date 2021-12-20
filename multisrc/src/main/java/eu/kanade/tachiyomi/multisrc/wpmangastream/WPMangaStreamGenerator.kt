@@ -13,7 +13,7 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
     override val baseVersionCode: Int = 12
 
     override val sources = listOf(
-        MultiLang("Asura Scans", "https://www.asurascans.com", listOf("en", "tr"), className = "AsuraScansFactory", pkgName = "asurascans", overrideVersionCode = 7),
+        MultiLang("Asura Scans", "https://www.asurascans.com", listOf("en", "tr"), className = "AsuraScansFactory", pkgName = "asurascans", overrideVersionCode = 8),
         SingleLang("Infernal Void Scans", "https://infernalvoidscans.com", "en", overrideVersionCode = 2),
         SingleLang("KlanKomik", "https://klankomik.com", "id", overrideVersionCode = 1),
         SingleLang("Kombatch", "https://kombatch.com", "id"),
@@ -25,7 +25,7 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         SingleLang("Sekte Komik", "https://sektekomik.com", "id", overrideVersionCode = 3),
         SingleLang("Komik Station", "https://komikstation.com", "id", overrideVersionCode = 2),
         SingleLang("Non-Stop Scans", "https://www.nonstopscans.com", "en", className = "NonStopScans"),
-        SingleLang("KomikIndo.co", "https://komikindo.co", "id", className = "KomikindoCo", overrideVersionCode = 2),
+        SingleLang("KomikIndo.co", "https://komikindo.co", "id", className = "KomikindoCo", overrideVersionCode = 3),
         SingleLang("Readkomik", "https://readkomik.com", "en", className = "ReadKomik", overrideVersionCode = 1),
         SingleLang("MangaIndonesia", "https://mangaindonesia.net", "id"),
         SingleLang("Liebe Schnee Hiver", "https://www.liebeschneehiver.com", "tr"),
@@ -47,13 +47,13 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         SingleLang("The Apollo Team", "https://theapollo.team", "en"),
         SingleLang("Sekte Doujin", "https://sektedoujin.xyz", "id", isNsfw = true, overrideVersionCode = 2),
         SingleLang("Phoenix Fansub", "https://phoenixfansub.com", "es", overrideVersionCode = 1),
-        SingleLang("Geass Scanlator", "https://geassscan.xyz", "pt-BR", overrideVersionCode = 2),
         SingleLang("Imagine Scan", "https://imaginescan.com.br", "pt-BR", isNsfw = true),
         SingleLang("Vapo Scan", "https://vaposcans.com", "pt-BR", overrideVersionCode = 2),
         SingleLang("Hakai Scan", "http://hakaiscan.xyz", "pt-BR", isNsfw = true),
         SingleLang("Snudae Scans", "https://snudaescans.com", "en", isNsfw = true, className = "BatotoScans", overrideVersionCode = 1),
         SingleLang("Random Scans", "https://randomscans.xyz", "en"),
-        SingleLang("Fênix Scanlator", "https://fenixscanlator.xyz", "pt-BR", className = "FenixScanlator", overrideVersionCode = 2)
+        SingleLang("Fênix Scanlator", "https://fenixscanlator.xyz", "pt-BR", className = "FenixScanlator", overrideVersionCode = 2),
+        SingleLang("Phantom Scans", "https://phantomscans.com", "en")
     )
 
     companion object {
