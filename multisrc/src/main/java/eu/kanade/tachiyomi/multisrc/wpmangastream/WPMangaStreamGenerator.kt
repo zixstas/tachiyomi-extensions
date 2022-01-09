@@ -31,7 +31,7 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         SingleLang("Liebe Schnee Hiver", "https://lshistoria.com", "tr", overrideVersionCode = 1),
         SingleLang("GoGoManga", "https://gogomanga.org", "en"),
         SingleLang("GURU Komik", "https://gurukomik.com", "id"),
-        SingleLang("Shea Manga", "https://sheamanga.my.id", "id", overrideVersionCode = 1),
+        SingleLang("Shea Manga", "http://sheamanga.my.id", "id", overrideVersionCode = 2),
         SingleLang("Komik AV", "https://komikav.com", "id", overrideVersionCode = 1),
         SingleLang("Komik Cast", "https://komikcast.com", "id", overrideVersionCode = 9),
         SingleLang("West Manga", "https://westmanga.info", "id", overrideVersionCode = 1),
@@ -45,7 +45,7 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         SingleLang("NoxSubs", "https://noxsubs.com", "tr"),
         SingleLang("The Apollo Team", "https://theapollo.team", "en"),
         SingleLang("Sekte Doujin", "https://sektedoujin.xyz", "id", isNsfw = true, overrideVersionCode = 2),
-        SingleLang("Phoenix Fansub", "https://phoenixfansub.com", "es", overrideVersionCode = 1),
+        SingleLang("Phoenix Fansub", "https://phoenixfansub.com", "es", overrideVersionCode = 2),
         SingleLang("Imagine Scan", "https://imaginescan.com.br", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Vapo Scan", "https://vaposcans.com", "pt-BR", overrideVersionCode = 3),
         SingleLang("Hakai Scan", "http://hakaiscan.xyz", "pt-BR", isNsfw = true),
@@ -53,7 +53,9 @@ class WPMangaStreamGenerator : ThemeSourceGenerator {
         SingleLang("Random Scans", "https://randomscans.xyz", "en"),
         SingleLang("Fênix Scanlator", "https://fenixscanlator.xyz", "pt-BR", className = "FenixScanlator", overrideVersionCode = 2),
         SingleLang("Phantom Scans", "https://phantomscans.com", "en", overrideVersionCode = 1),
-        SingleLang("Omega Scans", "https://omegascans.org", "en", isNsfw = true)
+        SingleLang("Omega Scans", "https://omegascans.org", "en", isNsfw = true),
+        SingleLang("Geass Hentai", "https://geassscan.xyz", "pt-BR", isNsfw = true, overrideVersionCode = 2),
+        SingleLang("TukangKomik", "https://tukangkomik.com", "id"),
     )
 
     companion object {
