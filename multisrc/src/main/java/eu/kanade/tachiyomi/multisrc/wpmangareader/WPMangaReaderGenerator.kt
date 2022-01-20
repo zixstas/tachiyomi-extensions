@@ -32,7 +32,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Manhua Raw", "https://manhuaraw.com", "en"),
         SingleLang("TurkToon", "https://turktoon.com", "tr"),
         SingleLang("Gecenin Lordu", "https://geceninlordu.com", "tr", overrideVersionCode = 1),
-        SingleLang("PMScans", "http://www.pmscans.com", "en", overrideVersionCode = 1),
+        SingleLang("PMScans", "http://www.rackusreader.org", "en", overrideVersionCode = 2),
         SingleLang("Realm Scans", "https://realmscans.com", "en", overrideVersionCode = 2),
         SingleLang("Skull Scans", "https://www.skullscans.com", "en", overrideVersionCode = 1),
         SingleLang("Shimada Scans", "https://shimadascans.com", "en"),
@@ -44,7 +44,7 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
         SingleLang("Ace Scans", "https://acescans.xyz", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("Silence Scan", "https://silencescan.com.br", "pt-BR", isNsfw = true, overrideVersionCode = 5),
         SingleLang("YANP Fansub", "https://yanpfansub.com", "pt-BR", isNsfw = true),
-        SingleLang("World Romance Translation", "https://wrt.my.id", "id", overrideVersionCode = 6),
+        SingleLang("World Romance Translation", "https://wrt.my.id", "id", overrideVersionCode = 7),
         SingleLang("Ozul Scans", "https://ozulscans.com", "ar"),
         SingleLang("Tsundoku Traduções", "https://tsundokutraducoes.com.br", "pt-BR", className = "TsundokuTraducoes", overrideVersionCode = 8)
     )
